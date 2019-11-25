@@ -6,8 +6,11 @@ library(dplyr)
 library(caret)
 library(class)
 library(e1071)
+library(reshape2)
 library(ggplot2)
 library(GGally)
+library(tidyverse)
+
 
 ##############################################
 ## Create Function to Process data sets.
@@ -278,9 +281,9 @@ attData %>% select(Attrition, OverTime) %>%
 
 ##############################################
 ## Select Data for Models.
-##############################################  c(5,7, 8,10, 11,13)]
+##############################################  
 
-ds_full <- attData %>%
+ds_a <- attData %>%
   select(ID,
          Age, MaritalStatus, Education,   # 2, 3, 4
          DistanceFromHome, WorkLifeBalance, TravelScore, # 5, 6, 7
@@ -292,122 +295,166 @@ ds_full <- attData %>%
 
 # Convert MaritalStatus into a number.
 
-ds_full$MaritalStatusNum <- as.integer(ds_full$MaritalStatus)  # 23
+ds_a$MaritalStatusNum <- as.integer(ds_a$MaritalStatus)  # 23
 
 ##############################################
-## Model Attrition  (KNN)
+## Model Attrition  (KNN)  Variable test
 ##############################################
 
 # Spit Data set into a training Data set and a testing dataset. @ 70/30
 sp = 0.70  # Split percentage
 
-TrainingRows = sample(1:dim(ds_full)[1],round(sp * dim(ds_full)[1])) # Calculate Training Rows
-ds_train = ds_full[TrainingRows,]  # Split into 2 seperate data frames. Include Training Rows
-ds_test = ds_full[-TrainingRows,]  # Exclude Training Rows (Testing Rows)
-
-
+TrainingRows = sample(1:dim(ds_a)[1],round(sp * dim(ds_a)[1])) # Calculate Training Rows
+ds_train = ds_a[TrainingRows,]  # Split into 2 seperate data frames. Include Training Rows
+ds_test = ds_a[-TrainingRows,]  # Exclude Training Rows (Testing Rows)
 
 #### Acc = 83.9, Sens = 85.3, Spec = 44
 classifications = knn(ds_train[,c(2,23,18,19,20,21)], ds_test[,c(2,23,18,19,20,21)],
-                      ds_train$Attrition, k = 5, prob = FALSE)
+                      ds_train$Attrition, k = 9, prob = FALSE)
 
-#### Acc = 83.5, Sens = 84.9, Spec = 37.5
-classifications = knn(ds_train[,c(18,19,20,21)], ds_test[,c(18,19,20,21)],
-                      ds_train$Attrition, k = 5, prob = FALSE)
+# Other Models #####
 
-#### Acc = 83.5, Sens = 84.9, Spec = 37.5
-classifications = knn(ds_train[,c(18,19)], ds_test[,c(18,19)],
-                      ds_train$Attrition, k = 5, prob = FALSE)
+# #### Acc = 83.5, Sens = 84.9, Spec = 37.5
+# classifications = knn(ds_train[,c(18,19,20,21)], ds_test[,c(18,19,20,21)],
+#                       ds_train$Attrition, k = 5, prob = FALSE)
+# 
+# #### Acc = 83.5, Sens = 84.9, Spec = 37.5
+# classifications = knn(ds_train[,c(18,19)], ds_test[,c(18,19)],
+#                       ds_train$Attrition, k = 5, prob = FALSE)
+# 
+# #### Acc = 83.5, Sens = 84.4, Spec = 25.0
+# classifications = knn(ds_train[,c(2,4,5,6,8,10,13,14,15,16,17)], ds_test[,c(2,4,5,6,8,10,13,14,15,16,17)],
+#                       ds_train$Attrition, k = 5, prob = FALSE)
+# 
+# 
+# #### Acc = 83.5, Sens = 84.4, Spec = 25.0
+# classifications = knn(ds_train[,c(2,23,4,5,6,7,8,9,10,11,12,13,14,15,16,17)], ds_test[,c(2,23,4,5,6,7,8,9,10,11,12,13,14,15,16,17)],
+#                       ds_train$Attrition, k = 5, prob = FALSE)
+# 
+# 
+# #### Acc = 83.5, Sens = 84.4, Spec = 25.0
+# classifications = knn(ds_train[,c(2,23, 5,7, 8,10, 11,13)], ds_test[,c(2,23, 5,7, 8,10, 11,13)],
+#                       ds_train$Attrition, k = 5, prob = FALSE)
 
-#### Acc = 83.5, Sens = 84.4, Spec = 25.0
-classifications = knn(ds_train[,c(2,4,5,6,8,10,13,14,15,16,17)], ds_test[,c(2,4,5,6,8,10,13,14,15,16,17)],
-                      ds_train$Attrition, k = 5, prob = FALSE)
 
-
-#### Acc = 83.5, Sens = 84.4, Spec = 25.0
-classifications = knn(ds_train[,c(2,23,4,5,6,7,8,9,10,11,12,13,14,15,16,17)], ds_test[,c(2,23,4,5,6,7,8,9,10,11,12,13,14,15,16,17)],
-                      ds_train$Attrition, k = 5, prob = FALSE)
-
-
-#### Acc = 83.5, Sens = 84.4, Spec = 25.0
-classifications = knn(ds_train[,c(2,23, 5,7, 8,10, 11,13)], ds_test[,c(2,23, 5,7, 8,10, 11,13)],
-                      ds_train$Attrition, k = 5, prob = FALSE)
-
-
-# classifications
+# classifications ####
 
 table(ds_test$Attrition, classifications)
-
 cm = confusionMatrix(table(ds_test$Attrition, classifications))
 
-AccValue = ((cm$table[1,1] + cm$table[2,2])) / ((cm$table[1,1] + cm$table[1,2]) + 
-                                                  (cm$table[2,1] + cm$table[2,2]))
-
-# MisClassValue = ((cm$table[1,2] + cm$table[2,1])) / ((cm$table[1,1] + cm$table[1,2]) + 
-#                                                        (cm$table[2,1] + cm$table[2,2]))
-
+AccValue = ((cm$table[1,1] + cm$table[2,2])) / ((cm$table[1,1] + cm$table[1,2]) + (cm$table[2,1] + cm$table[2,2]))
 SensitivityValue = cm$table[1,1] / (cm$table[1,1] + cm$table[2,1])
 SpecifictityValue = cm$table[2,2] / (cm$table[1,2] + cm$table[2,2])
 
-cm
 AccValue
-# MisClassValue
 SensitivityValue
 SpecifictityValue
+
+
+##############################################
+## test KNN for best K
+##############################################
+
+# Variables
+set.seed(5)
+iter = 100
+numks = 10
+split = .70
+
+# Create a matrix to hold the values from each run.
+AccuMatrix = matrix(nrow = iter, ncol = numks)
+SensMatrix = matrix(nrow = iter, ncol = numks)
+SpecMatrix = matrix(nrow = iter, ncol = numks)
+
+for(j in 1:iter)
+{
+  TrainingRows = sample(1:dim(ds_a)[1],round(split * dim(ds_a)[1])) # Calculate Training Rows
+  ds_train = ds_a[TrainingRows,]  # Split into 2 seperate data frames. Include Training Rows
+  ds_test = ds_a[-TrainingRows,]  # Exclude Training Rows (Testing Rows)
+  for(i in 1:numks)
+  {
+    
+    classifications = knn(ds_train[,c(2,23,18,19,20,21)], ds_test[,c(2,23,18,19,20,21)],
+                          ds_train$Attrition, prob = TRUE, k = i)
+    
+    table(ds_test$Attrition, classifications)
+    cm = confusionMatrix(table(ds_test$Attrition, classifications))
+    
+    AccuMatrix[j,i] = ((cm$table[1,1] + cm$table[2,2])) / ((cm$table[1,1] + cm$table[1,2]) + (cm$table[2,1] + cm$table[2,2]))
+    SensMatrix[j,i] = cm$table[1,1] / (cm$table[1,1] + cm$table[2,1])
+    SpecMatrix[j,i] = cm$table[2,2] / (cm$table[1,2] + cm$table[2,2])
+  }
+  
+}
+
+AccuracyMean = colMeans(AccuMatrix)
+SpecMean = colMeans(SpecMatrix)
+SensMean = colMeans(SensMatrix)
+
+plot(seq(1,numks,1),AccuracyMean, type = "l")
+which.max(AccuracyMean)
+max(AccuracyMean)
+
+
+plot(seq(1,numks,1),SpecMean, type = "l")
+which.max(SpecMean)
+max(SpecMean)
+
+
+plot(seq(1,numks,1),SensMean, type = "l")
+which.max(SensMean)
+max(SensMean)
 
 
 ##############################################
 ## Model Attrition  (Naive Bayes)
+## Over 100 iterations Accu = 84.2, Spec = 72.6, Sens = 84.5
+## nbm <- naiveBayes(ds_train[,c(2,23,18,21)],ds_train$Attrition)
 ##############################################
 
-# # Spit Data set into a training Data set and a testing dataset. @ 70/30
-# sp = 0.70  # Split percentage
+# Variables
+set.seed(3)
+iter = 100
+split = .70
+
+# Create a matrix to hold the values from each run.
+AccuVect = vector(length = iter)
+SensVect = vector(length = iter)
+SpecVect = vector(length = iter)
+
+for(j in 1:iter)
+{
+  TrainingRows = sample(1:dim(ds_a)[1],round(split * dim(ds_a)[1])) # Calculate Training Rows
+  ds_train = ds_a[TrainingRows,]  # Split into 2 seperate data frames. Include Training Rows
+  ds_test = ds_a[-TrainingRows,]  # Exclude Training Rows (Testing Rows)
+  
+  nbm <- naiveBayes(ds_train[,c(2,23,18,21)],ds_train$Attrition)
+  
+  # Predict outcomes for Testing data set.
+  ds_test$predict_outcome = predict(nbm,ds_test)
+  
+  classifications = predict(nbm,ds_test)
+  # classifications
+  table(ds_test$Attrition, classifications)
+  cm = confusionMatrix(table(ds_test$Attrition, classifications))
+  
+  AccuVect[j] = ((cm$table[1,1] + cm$table[2,2])) / ((cm$table[1,1] + cm$table[1,2]) + (cm$table[2,1] + cm$table[2,2]))
+  SensVect[j] = cm$table[1,1] / (cm$table[1,1] + cm$table[2,1])
+  SpecVect[j] = cm$table[2,2] / (cm$table[1,2] + cm$table[2,2])
+}
+
+mean(AccuVect)
+mean(SpecVect)
+mean(SensVect)
+
+# #### Acc = 88.1, Sens = 89.5, Spec = 72.7
+# nbm <- naiveBayes(ds_train[,c(2,23,18,19,20,21)],ds_train$Attrition) 
 # 
-# TrainingRows = sample(1:dim(ds_full)[1],round(sp * dim(ds_full)[1])) # Calculate Training Rows
-# ds_train = ds_full[TrainingRows,]  # Split into 2 seperate data frames. Include Training Rows
-# ds_test = ds_full[-TrainingRows,]  # Exclude Training Rows (Testing Rows)
-
-
-#### Acc = 88.1, Sens = 89.5, Spec = 72.7
-nbm <- naiveBayes(ds_train[,c(2,23,18,19,20,21)],ds_train$Attrition) 
-
-#### Acc = 86.2, Sens = 85.9, Spec = 100
-nbm <- naiveBayes(ds_train[,c(2,23,18,21)],ds_train$Attrition) 
-
-#### Acc = 85.8, Sens = 85.8, Spec = 83.3
-nbm <- naiveBayes(ds_train[,c(18,19,20,21)],ds_train$Attrition) 
-
-
-# Predict outcomes for Testing data set.
-ds_test$predict_outcome = predict(nbm,ds_test)
-
-classifications = predict(nbm,ds_test)
-# classifications
-table(ds_test$Attrition, classifications)
-cm = confusionMatrix(table(ds_test$Attrition, classifications))
-
-AccuracyValue = ((cm$table[1,1] + cm$table[2,2])) / ((cm$table[1,1] + cm$table[1,2]) + 
-                                                       (cm$table[2,1] + cm$table[2,2]))
-
-# MisClassValue = ((cm$table[1,2] + cm$table[2,1])) / ((cm$table[1,1] + cm$table[1,2]) + 
-#                                                        (cm$table[2,1] + cm$table[2,2]))
-
-SensitivityValue = cm$table[1,1] / (cm$table[1,1] + cm$table[2,1])
-SpecifictityValue = cm$table[2,2] / (cm$table[1,2] + cm$table[2,2])
-
-table(ds_test$Attrition, classifications)
-AccuracyValue
-# MisClassValue
-SensitivityValue
-SpecifictityValue
-
-
-
-
-# Plot the results
-ds_test %>% ggplot(mapping = aes(x= ds_test$Attrition, fill = ds_test$predict_outcome))+
-  geom_bar()+
-  labs(title="Survivability by Class (NB Model)", x="Class", y="Count", fill="")
+# #### Acc = 86.2, Sens = 85.9, Spec = 100
+# nbm <- naiveBayes(ds_train[,c(2,23,18,21)],ds_train$Attrition) 
+# 
+# #### Acc = 85.8, Sens = 85.8, Spec = 83.3
+# nbm <- naiveBayes(ds_train[,c(18,19,20,21)],ds_train$Attrition) 
 
 
 
@@ -416,11 +463,106 @@ ds_test %>% ggplot(mapping = aes(x= ds_test$Attrition, fill = ds_test$predict_ou
 ##############################################
 
 
+attData %>% ggplot(aes(y = MonthlyIncome, x = Age)) + geom_point() + geom_smooth()
+
+attData %>% ggplot(aes(y = MonthlyIncome, x = JobLevel)) + geom_point() + geom_smooth()
+
+attData %>% ggplot(aes(y = MonthlyIncome, x = TotalWorkingYears)) + geom_point() + geom_smooth()
+
+attData %>% ggplot(aes(y = MonthlyIncome, x = YearsAtCompany)) + geom_point() + geom_smooth()
+
+attData %>% ggplot(aes(y = MonthlyIncome, x = YearsInCurrentRole)) + geom_point() + geom_smooth()
+
+attData %>% ggplot(aes(y = MonthlyIncome, x = YearsSinceLastPromotion)) + geom_point() + geom_smooth()
+
+#  RMSE = 2,294,259
+#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany+TotalWorkingYears+YearsInCurrentRole+YearsSinceLastPromotion, data = ds_train)
+
+#  RMSE = 2,285,584
+#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany+TotalWorkingYears+YearsInCurrentRole, data = ds_train)
+
+#  RMSE = 2,283,734
+#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany+TotalWorkingYears, data = ds_train)
+
+#  RMSE = 2,209,149
+#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany, data = ds_train)
+
+#  RMSE = 2,198,590
+#  MI_fit <- lm(MonthlyIncome~JobLevel+Age, data = ds_train)
+
+#  RMSE = 2,260,143
+#  MI_fit <- lm(MonthlyIncome~JobLevel, data = ds_train)
+
+#  RMSE = 12,934,704
+#  MI_fit <- lm(MonthlyIncome~YearsAtCompany+Age, data = ds_train)
+
+#  RMSE = 2,247,610
+#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+TotalWorkingYears, data = ds_train)
+
+#  RMSE = 385,216.1
+#  MI_fit <- lm(MonthlyIncome~Age+JobLevel+TotalWLBScore+PayScore+TotalGrowthScore+TotalEnvScore, data = ds_train)
+
+#  RMSE = 379,944.9
+#  MI_fit <- lm(MonthlyIncome~Age+JobLevel+PayScore+TotalGrowthScore, data = ds_train)
+
+#  RMSE = 378,864.5
+#  MI_fit <- lm(MonthlyIncome~JobLevel+PayScore+TotalGrowthScore, data = ds_train)
+
+#  RMSE = 205,471.4
+#  MI_fit <- lm(MonthlyIncome~JobLevel+JobRole+NumCompaniesWorked+YearsAtCompany+PayScore+TotalGrowthScore, data = ds_train)
+
+#  RMSE = 205,150.4
+#  MI_fit <- lm(MonthlyIncome~JobLevel+JobRole+YearsAtCompany+PayScore+TotalGrowthScore, data = ds_train)
 
 
+# Variables
+set.seed(3)
+iter = 100
+
+# Create a matrix to hold the values from each run.
+ObserVect = vector(length = iter)
+PredVect = vector(length = iter)
+
+for(j in 1:iter)
+{
+  TrainingRows = sample(1:dim(attData)[1],dim(attData)[1]-1) # Calculate Training Rows (leave one out)
+  ds_train = attData[TrainingRows,]  # Split into 2 seperate data frames. Include Training Rows
+  ds_test = attData[-TrainingRows,]  # Exclude Training Rows (Testing Rows)
+  
+  MI_fit <- lm(MonthlyIncome~JobLevel+JobRole+YearsAtCompany+PayScore+TotalGrowthScore, data = ds_train)
+  ObserVect[j] <- ds_test$MonthlyIncome
+  PredVect[j] <- predict(MI_fit, newdata = ds_test)
+  
+}
+
+mi_model_df <- data.frame(ObserVect, PredVect)
+# Calculate Resisduals
+mi_model_df$Res <- mi_model_df$ObserVect - mi_model_df$PredVect
+# Square the Resisduals
+mi_model_df$ResSQ = mi_model_df$Res^2
+# Calculate the RMSE
+mean(mi_model_df$ResSQ)
+  
+
+mi_model_df$Res
 
 
+summary(MI_fit)
+#beta_0
+mi.fit$coefficients[1]
+#beta_1
+mi.fit$coefficients[2]
 
+#Confidence Intervals
+confint(mi.fit)
+
+
+# plot(mi.fit$fitted, rstudent(mi.fit), main = "Multi Fit Residuals")
+# abline(h=0,lty=2)
+
+hist(mi.fit$resid, main = "Histogram of Residuals")
+qqnorm(mi.fit$resid)
+qqline(mi.fit$resid)
 
 
 
