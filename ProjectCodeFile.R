@@ -184,6 +184,48 @@ processData <- function(df){
 attData <- processData(read.csv("CaseStudy2-data.csv"))      #StringsAsFactors = TRUE
 
 ##############################################
+## Heatmap Correlation Matrix
+##############################################
+
+corrData <- select(attData, Age,JobLevel, MonthlyIncome, NumCompaniesWorked, PercentSalaryHike, PerformanceRating,
+                   TotalWorkingYears, YearsAtCompany, YearsInCurrentRole, YearsSinceLastPromotion, YearsWithCurrManager)
+
+corrData$Attrition = as.integer(attData$Attrition)
+
+cm <- round(cor(corrData),2)
+
+hmData <- melt(cm)
+
+
+hm <- ggplot(hmData, aes(Var2, Var1, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1)) +
+  coord_fixed()
+
+
+hm + 
+  geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank(),
+    legend.justification = c(1, 0),
+    legend.position = c(-5, 0),
+    legend.direction = "horizontal")+
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+                               title.position = "top", title.hjust = 0.5))
+
+
+
+##############################################
 ## EDA for Work Life Balance variables
 ##############################################
 # The work Life Balance factors do not seem to have much of an impact to determine attrition.
@@ -191,17 +233,17 @@ attData %>% select(Attrition, BusinessTravel, DistanceFromHome, WorkLifeBalance)
   ggpairs(mapping = aes(color = Attrition), title = "Work Life Balance factors vs Attrition")
   
 attData %>% select(Attrition, BusinessTravel) %>%
-  ggpairs(mapping = aes(color = Attrition), title = "Work Life Balance factors vs Attrition")
+  ggpairs(mapping = aes(color = Attrition), title = "Business Travel vs Attrition")
 
 attData %>% select(Attrition, DistanceFromHome) %>%
-  ggpairs(mapping = aes(color = Attrition), title = "Work Life Balance factors vs Attrition")
+  ggpairs(mapping = aes(color = Attrition), title = "Distance From Home vs Attrition")
 
 attData %>% select(Attrition, WorkLifeBalance) %>%
-  ggpairs(mapping = aes(color = Attrition), title = "Work Life Balance factors vs Attrition")
+  ggpairs(mapping = aes(color = Attrition), title = "Work Life Balance vs Attrition")
 
 # My score for Work Life Balance seems normally distributed and might be better to determine attrition.
 attData %>% select(Attrition, TotalWLBScore) %>%
-  ggpairs(mapping = aes(color = Attrition), title = "Work Life Balance factors vs Attrition")
+  ggpairs(mapping = aes(color = Attrition), title = "Work Life Balance Score vs Attrition")
 
 
 ##############################################
@@ -213,7 +255,7 @@ attData %>% select(Attrition, MonthlyIncome, PercentSalaryHike, StockOptionLevel
 
 # The Total Pay Score seems normally distributed and a good indicator of determining attrition.
 attData %>% select(Attrition, TotalPayScore) %>%
-  ggpairs(mapping = aes(color = Attrition), title = "Compensation factors vs Attrition")
+  ggpairs(mapping = aes(color = Attrition), title = "Compensation Score vs Attrition")
 
 
 ##############################################
@@ -225,7 +267,7 @@ attData %>% select(Attrition, JobLevel, TrainingTimesLastYear, YearsSinceLastPro
   
 # Total Growth score seems like a good indicator of attrition, but is not normally distributed.
 attData %>% select(Attrition, TotalGrowthScore) %>%
-  ggpairs(mapping = aes(color = Attrition), title = "Career Growth factors vs Attrition")
+  ggpairs(mapping = aes(color = Attrition), title = "Total Growth Score vs Attrition")
 
 
 ##############################################
@@ -250,7 +292,7 @@ attData %>% select(Attrition, YearsWithCurrManager) %>%
 
 # The Total Environmental Score does look normally distributed and might be a good indicator of attrition.
 attData %>% select(Attrition, TotalEnvScore) %>%
-  ggpairs(mapping = aes(color = Attrition), title = "Environmental factors vs Attrition")
+  ggpairs(mapping = aes(color = Attrition), title = "Environmental Score vs Attrition")
 
   
 ##############################################
@@ -269,6 +311,7 @@ attData %>% select(Attrition, MaritalStatus) %>%
 # Does not look usefull.
 attData %>% select(Attrition, Education) %>%
   ggpairs(mapping = aes(color = Attrition), title = "Education vs Attrition")
+
 # Does not look usefull.
 attData %>% select(Attrition, Gender) %>%
   ggpairs(mapping = aes(color = Attrition), title = "Gender vs Attrition")
@@ -284,23 +327,23 @@ attData %>% select(Attrition, OverTime) %>%
 ##############################################  
 
 ds_a <- attData %>%
-  select(ID,
-         Age, MaritalStatus, Education,   # 2, 3, 4
-         DistanceFromHome, WorkLifeBalance, TravelScore, # 5, 6, 7
-         MonthlyIncome, PercentSalaryHike, StockOptionLevel, JobLevel, # 8, 9, 10, 11
-         TrainingTimesLastYear, YearsInCurrentRole, YearsSinceLastPromotion,  # 12, 13, 14
-         YearsWithCurrManager, EnvironmentSatisfaction, RelationshipSatisfaction,  # 15, 16, 17
-         TotalWLBScore, TotalPayScore, TotalGrowthScore, TotalEnvScore,  # 18, 19, 20, 21
-         Attrition) # 22
+  select(ID,  # 1
+         Age, MaritalStatus, Education, JobInvolvement,   # 2, 3, 4, 5
+         DistanceFromHome, WorkLifeBalance, TravelScore, # 6, 7, 8
+         MonthlyIncome, PercentSalaryHike, StockOptionLevel, JobLevel, # 9, 10, 11, 12
+         TrainingTimesLastYear, YearsInCurrentRole, YearsSinceLastPromotion,  # 13, 14, 15
+         YearsWithCurrManager, EnvironmentSatisfaction, RelationshipSatisfaction,  # 16, 17, 18
+         TotalWLBScore, TotalPayScore, TotalGrowthScore, TotalEnvScore,  # 19, 20, 21, 22
+         Attrition)  # 23
 
 # Convert MaritalStatus into a number.
 
-ds_a$MaritalStatusNum <- as.integer(ds_a$MaritalStatus)  # 23
+ds_a$MaritalStatusNum <- as.integer(ds_a$MaritalStatus)  # 24
 
 ##############################################
 ## Model Attrition  (KNN)  Variable test
 ##############################################
-
+set.seed(5)
 # Spit Data set into a training Data set and a testing dataset. @ 70/30
 sp = 0.70  # Split percentage
 
@@ -309,17 +352,21 @@ ds_train = ds_a[TrainingRows,]  # Split into 2 seperate data frames. Include Tra
 ds_test = ds_a[-TrainingRows,]  # Exclude Training Rows (Testing Rows)
 
 #### Acc = 83.9, Sens = 85.3, Spec = 44
-classifications = knn(ds_train[,c(2,23,18,19,20,21)], ds_test[,c(2,23,18,19,20,21)],
+# classifications = knn(ds_train[,c(2,24,19,20,21,22)], ds_test[,c(2,24,19,20,21,22)],
+#                       ds_train$Attrition, k = 9, prob = FALSE)
+
+classifications = knn(ds_train[,c(2,6)], ds_test[,c(2,6)],
                       ds_train$Attrition, k = 9, prob = FALSE)
+
 
 # Other Models #####
 
 # #### Acc = 83.5, Sens = 84.9, Spec = 37.5
-# classifications = knn(ds_train[,c(18,19,20,21)], ds_test[,c(18,19,20,21)],
+# classifications = knn(ds_train[,c(19,20,21,22)], ds_test[,c(19,20,21,22)],
 #                       ds_train$Attrition, k = 5, prob = FALSE)
 # 
 # #### Acc = 83.5, Sens = 84.9, Spec = 37.5
-# classifications = knn(ds_train[,c(18,19)], ds_test[,c(18,19)],
+# classifications = knn(ds_train[,c(19,20)], ds_test[,c(19,20)],
 #                       ds_train$Attrition, k = 5, prob = FALSE)
 # 
 # #### Acc = 83.5, Sens = 84.4, Spec = 25.0
@@ -353,6 +400,7 @@ SpecifictityValue
 
 ##############################################
 ## test KNN for best K
+## determined K=9 to give the best model.
 ##############################################
 
 # Variables
@@ -374,7 +422,7 @@ for(j in 1:iter)
   for(i in 1:numks)
   {
     
-    classifications = knn(ds_train[,c(2,23,18,19,20,21)], ds_test[,c(2,23,18,19,20,21)],
+    classifications = knn(ds_train[,c(2,24,19,20,21,22)], ds_test[,c(2,24,19,20,21,22)],
                           ds_train$Attrition, prob = TRUE, k = i)
     
     table(ds_test$Attrition, classifications)
@@ -408,12 +456,12 @@ max(SensMean)
 
 ##############################################
 ## Model Attrition  (Naive Bayes)
-## Over 100 iterations Accu = 84.2, Spec = 72.6, Sens = 84.5
-## nbm <- naiveBayes(ds_train[,c(2,23,18,21)],ds_train$Attrition)
+## Over 100 iterations Accu = 84.7, Spec = 71.1, Sens = 85.1
+## nbm <- naiveBayes(ds_train[,c(2,24,19,22)],ds_train$Attrition)
 ##############################################
 
 # Variables
-set.seed(3)
+set.seed(5)
 iter = 100
 split = .70
 
@@ -428,7 +476,7 @@ for(j in 1:iter)
   ds_train = ds_a[TrainingRows,]  # Split into 2 seperate data frames. Include Training Rows
   ds_test = ds_a[-TrainingRows,]  # Exclude Training Rows (Testing Rows)
   
-  nbm <- naiveBayes(ds_train[,c(2,23,18,21)],ds_train$Attrition)
+  nbm <- naiveBayes(ds_train[,c(2,24,19,22)],ds_train$Attrition)
   
   # Predict outcomes for Testing data set.
   ds_test$predict_outcome = predict(nbm,ds_test)
@@ -447,6 +495,14 @@ mean(AccuVect)
 mean(SpecVect)
 mean(SensVect)
 
+plot(seq(1,length(AccuVect),1),AccuVect, type = "l", main = "Accuracy From NB Model", xlab = "Iteration", ylab = "Accuracy")
+
+plot(seq(1,length(SpecVect),1),SpecVect, type = "l", main = "Specificity From NB Model", xlab = "Iteration", ylab = "Specificity")
+
+plot(seq(1,length(SensVect),1),SensVect, type = "l", main = "Sensitivity From NB Model", xlab = "Iteration", ylab = "Sensitivity")
+
+
+
 # #### Acc = 88.1, Sens = 89.5, Spec = 72.7
 # nbm <- naiveBayes(ds_train[,c(2,23,18,19,20,21)],ds_train$Attrition) 
 # 
@@ -463,57 +519,74 @@ mean(SensVect)
 ##############################################
 
 
-attData %>% ggplot(aes(y = MonthlyIncome, x = Age)) + geom_point() + geom_smooth()
+# attData %>% ggplot(aes(y = MonthlyIncome, x = Age)) + geom_point() + geom_smooth()
 
 attData %>% ggplot(aes(y = MonthlyIncome, x = JobLevel)) + geom_point() + geom_smooth()
 
-attData %>% ggplot(aes(y = MonthlyIncome, x = TotalWorkingYears)) + geom_point() + geom_smooth()
+attData %>% ggplot(aes(y = MonthlyIncome, x = JobRole)) + geom_boxplot()
+
+# attData %>% ggplot(aes(y = MonthlyIncome, x = TotalWorkingYears)) + geom_point() + geom_smooth()
 
 attData %>% ggplot(aes(y = MonthlyIncome, x = YearsAtCompany)) + geom_point() + geom_smooth()
 
-attData %>% ggplot(aes(y = MonthlyIncome, x = YearsInCurrentRole)) + geom_point() + geom_smooth()
+# attData %>% ggplot(aes(y = MonthlyIncome, x = YearsInCurrentRole)) + geom_point() + geom_smooth()
 
-attData %>% ggplot(aes(y = MonthlyIncome, x = YearsSinceLastPromotion)) + geom_point() + geom_smooth()
+# attData %>% ggplot(aes(y = MonthlyIncome, x = YearsSinceLastPromotion)) + geom_point() + geom_smooth()
 
-#  RMSE = 2,294,259
-#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany+TotalWorkingYears+YearsInCurrentRole+YearsSinceLastPromotion, data = ds_train)
+# attData %>% ggplot(aes(y = MonthlyIncome, x = PayScore)) + geom_point() + geom_smooth()
 
-#  RMSE = 2,285,584
-#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany+TotalWorkingYears+YearsInCurrentRole, data = ds_train)
+attData %>% ggplot(aes(y = MonthlyIncome, x = PayScore)) + geom_point() + geom_smooth()
 
-#  RMSE = 2,283,734
-#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany+TotalWorkingYears, data = ds_train)
+# attData %>% ggplot(aes(y = MonthlyIncome, x = RaiseScore)) + geom_point() + geom_smooth()
 
-#  RMSE = 2,209,149
-#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany, data = ds_train)
+# attData %>% ggplot(aes(y = MonthlyIncome, x = StockScore)) + geom_point() + geom_smooth()
 
-#  RMSE = 2,198,590
-#  MI_fit <- lm(MonthlyIncome~JobLevel+Age, data = ds_train)
+attData %>% ggplot(aes(y = MonthlyIncome, x = RoleScore)) + geom_point() + geom_smooth()
 
-#  RMSE = 2,260,143
-#  MI_fit <- lm(MonthlyIncome~JobLevel, data = ds_train)
+# attData %>% ggplot(aes(y = MonthlyIncome, x = TotalGrowthScore)) + geom_point() + geom_smooth()
 
-#  RMSE = 12,934,704
+
+#  RMSE = 3596.48
 #  MI_fit <- lm(MonthlyIncome~YearsAtCompany+Age, data = ds_train)
 
-#  RMSE = 2,247,610
+#  RMSE = 1514.68
+#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany+TotalWorkingYears+YearsInCurrentRole+YearsSinceLastPromotion, data = ds_train)
+
+#  RMSE = 1511.81
+#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany+TotalWorkingYears+YearsInCurrentRole, data = ds_train)
+
+#  RMSE = 1511.20
+#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany+TotalWorkingYears, data = ds_train)
+
+#  RMSE = 1503.37
+#  MI_fit <- lm(MonthlyIncome~JobLevel, data = ds_train)
+
+#  RMSE = 1499.20
 #  MI_fit <- lm(MonthlyIncome~JobLevel+Age+TotalWorkingYears, data = ds_train)
 
-#  RMSE = 385,216.1
+#  RMSE = 1486.32
+#  MI_fit <- lm(MonthlyIncome~JobLevel+Age+YearsAtCompany, data = ds_train)
+
+#  RMSE = 1482.76
+#  MI_fit <- lm(MonthlyIncome~JobLevel+Age, data = ds_train)
+
+#  RMSE = 620.65
 #  MI_fit <- lm(MonthlyIncome~Age+JobLevel+TotalWLBScore+PayScore+TotalGrowthScore+TotalEnvScore, data = ds_train)
 
-#  RMSE = 379,944.9
+#  RMSE = 616.39
 #  MI_fit <- lm(MonthlyIncome~Age+JobLevel+PayScore+TotalGrowthScore, data = ds_train)
 
-#  RMSE = 378,864.5
+#  RMSE = 615.51
 #  MI_fit <- lm(MonthlyIncome~JobLevel+PayScore+TotalGrowthScore, data = ds_train)
 
-#  RMSE = 205,471.4
+#  RMSE = 453.28
 #  MI_fit <- lm(MonthlyIncome~JobLevel+JobRole+NumCompaniesWorked+YearsAtCompany+PayScore+TotalGrowthScore, data = ds_train)
 
-#  RMSE = 205,150.4
+#  RMSE = 452.93
 #  MI_fit <- lm(MonthlyIncome~JobLevel+JobRole+YearsAtCompany+PayScore+TotalGrowthScore, data = ds_train)
 
+#  RMSE = 440.33
+#  MI_fit <- lm(MonthlyIncome~JobLevel+JobRole+YearsAtCompany+PayScore+RoleScore, data = ds_train)
 
 # Variables
 set.seed(3)
@@ -529,7 +602,7 @@ for(j in 1:iter)
   ds_train = attData[TrainingRows,]  # Split into 2 seperate data frames. Include Training Rows
   ds_test = attData[-TrainingRows,]  # Exclude Training Rows (Testing Rows)
   
-  MI_fit <- lm(MonthlyIncome~JobLevel+JobRole+YearsAtCompany+PayScore+TotalGrowthScore, data = ds_train)
+  MI_fit <- lm(MonthlyIncome~JobLevel+JobRole+YearsAtCompany+PayScore+RoleScore, data = ds_train)
   ObserVect[j] <- ds_test$MonthlyIncome
   PredVect[j] <- predict(MI_fit, newdata = ds_test)
   
@@ -538,31 +611,30 @@ for(j in 1:iter)
 mi_model_df <- data.frame(ObserVect, PredVect)
 # Calculate Resisduals
 mi_model_df$Res <- mi_model_df$ObserVect - mi_model_df$PredVect
-# Square the Resisduals
+# Square the Residuals
 mi_model_df$ResSQ = mi_model_df$Res^2
 # Calculate the RMSE
-mean(mi_model_df$ResSQ)
+sqrt(mean(mi_model_df$ResSQ))
   
-
-mi_model_df$Res
-
-
 summary(MI_fit)
+
+
+
 #beta_0
-mi.fit$coefficients[1]
+MI_fit$coefficients[1]
 #beta_1
-mi.fit$coefficients[2]
+MI_fit$coefficients[2]
 
 #Confidence Intervals
-confint(mi.fit)
+confint(MI_fit)
 
 
-# plot(mi.fit$fitted, rstudent(mi.fit), main = "Multi Fit Residuals")
-# abline(h=0,lty=2)
 
-hist(mi.fit$resid, main = "Histogram of Residuals")
-qqnorm(mi.fit$resid)
-qqline(mi.fit$resid)
+hist(MI_fit$resid, main = "Histogram of Residuals", xlab = "Residuals")
+
+
+# qqnorm(MI_fit$resid)
+# qqline(MI_fit$resid)
 
 
 
