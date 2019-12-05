@@ -61,7 +61,7 @@ processData <- function(df){
     
     # Job level taken into account with the thought that pay rate at a level 1 has a lot of influence for someone 
     # staying or leaving, but has much less influence for a level 5 employee.
-    df$PayScore[i] = round((df$MonthlyIncome[i] / df$JobLevel[i]),-2)
+    df$PayScore[i] = round((df$MonthlyRate[i] / df$JobLevel[i]),-2)
     
     df$RaiseScore[i] = (df$PercentSalaryHike[i] * 100)  # a weight adjustment to keep in line with the Pay Score.
     
@@ -182,6 +182,19 @@ processData <- function(df){
 ##############################################
 
 attData <- processData(read.csv("CaseStudy2-data.csv"))      #StringsAsFactors = TRUE
+
+noattData <- processData(read.csv("CaseStudy2CompSet No Attrition.csv"))
+
+nosalData <- processData(read.csv("CaseStudy2CompSet No Salary.csv"))
+
+
+##############################################
+## Create Predicted columns.
+##############################################
+
+noattData$AttritionCalculated = 0
+
+nosalData$MonthlyIncomeCalculated = 0 
 
 ##############################################
 ## Heatmap Correlation Matrix
@@ -602,7 +615,7 @@ for(j in 1:iter)
   ds_train = attData[TrainingRows,]  # Split into 2 seperate data frames. Include Training Rows
   ds_test = attData[-TrainingRows,]  # Exclude Training Rows (Testing Rows)
   
-  MI_fit <- lm(MonthlyIncome~JobLevel+JobRole+YearsAtCompany+PayScore+RoleScore, data = ds_train)
+  MI_fit <- lm(MonthlyIncome~Age+JobLevel+JobRole+YearsAtCompany+TotalWorkingYears+RoleScore+TotalGrowthScore, data = ds_train)
   ObserVect[j] <- ds_test$MonthlyIncome
   PredVect[j] <- predict(MI_fit, newdata = ds_test)
   
@@ -636,8 +649,43 @@ hist(MI_fit$resid, main = "Histogram of Residuals", xlab = "Residuals")
 # qqnorm(MI_fit$resid)
 # qqline(MI_fit$resid)
 
+noattD
 
+##############################################
+## Make Predictions
+##############################################
 
+ds_a <- attData %>%
+  select(ID,  # 1
+         Age, MaritalStatus, Education, JobInvolvement,   # 2, 3, 4, 5
+         DistanceFromHome, WorkLifeBalance, TravelScore, # 6, 7, 8
+         MonthlyIncome, PercentSalaryHike, StockOptionLevel, JobLevel, # 9, 10, 11, 12
+         TrainingTimesLastYear, YearsInCurrentRole, YearsSinceLastPromotion,  # 13, 14, 15
+         YearsWithCurrManager, EnvironmentSatisfaction, RelationshipSatisfaction,  # 16, 17, 18
+         TotalWLBScore, TotalPayScore, TotalGrowthScore, TotalEnvScore,  # 19, 20, 21, 22
+         Attrition)  # 23
+
+# Convert MaritalStatus into a number.
+ds_a$MaritalStatusNum <- as.integer(ds_a$MaritalStatus)  # 24
+
+# Convert MaritalStatus into a number in Prediction Data Set.
+noattData$MaritalStatusNum <- as.integer(noattData$MaritalStatus)
+
+# Predict outcomes for No Attrition Data File
+nbm <- naiveBayes(ds_a[,c(2,24,19,22)],ds_a$Attrition)
+
+# Predict outcomes for Testing data set.
+noattData$AttritionCalculated = predict(nbm,noattData)
+ 
+  
+# Predict outcomes for Monthly Income.
+MI_fit <- lm(MonthlyIncome~Age+JobLevel+JobRole+YearsAtCompany+TotalWorkingYears+RoleScore+TotalGrowthScore, data = attData)
+nosalData$MonthlyIncomeCalculated <- predict(MI_fit, newdata = nosalData)
+  
+
+write.csv(noattData,"C:/Users/marcc/Documents/R/Projects/MSDS_6306_DDS_Project2/Case2PredictionsCarter Attrition.csv")
+
+write.csv(nosalData,"C:/Users/marcc/Documents/R/Projects/MSDS_6306_DDS_Project2/Case2PredictionsCarter Salary.csv")
 
 
 
