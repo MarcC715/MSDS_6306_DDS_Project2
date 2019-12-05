@@ -2,7 +2,6 @@
 title: "Marc Carter RMD"
 author: "Marc Carter"
 date: "11/16/2019"
-
 output: word_document
 always_allow_html: yes
 ---
@@ -201,7 +200,7 @@ attData <- processData(read.csv("CaseStudy2-data.csv"))      #StringsAsFactors =
 
 ```
 
-##Heat Map to show Correlation
+## Heat Map to show Correlation
 
 ```{r Heat Map, echo=FALSE, fig.height=6, fig.width=6, message=FALSE, warning=FALSE}
 ##############################################
@@ -248,7 +247,7 @@ hm +
 
 ```
 
-##EDA Plots
+## EDA Plots
 
 ```{r EDA Plots, echo=FALSE, message=FALSE, warning=FALSE}
 ##############################################
@@ -373,7 +372,7 @@ ds_a$MaritalStatusNum <- as.integer(ds_a$MaritalStatus)  # 24
 
 ```
 
-##KNN Model
+## KNN Model
 
 ```{r KNNCode, echo=FALSE, message=FALSE, warning=FALSE}
 ##############################################
@@ -433,7 +432,7 @@ max(SensMean)
 
 ```
 
-##Niave Bayes Model
+## Niave Bayes Model
 
 ```{r Naive Bayes, echo=FALSE, message=FALSE, warning=FALSE}
 ##############################################
@@ -485,7 +484,8 @@ plot(seq(1,length(SensVect),1),SensVect, type = "l", main = "Sensitivity From NB
 
 
 ```
-##Linear Model
+
+## Linear Model
 
 ```{r LinearModel, echo=FALSE, message=FALSE, warning=FALSE}
 
